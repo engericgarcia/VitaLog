@@ -52,7 +52,10 @@ export default async function ExameDetalhe({
             {fmt(latest.date)}
           </p>
         </div>
-        <div className="text-right">
+        {/* Alinha à esquerda no celular: quando o cabeçalho quebra em duas
+            linhas, alinhar à direita joga o número para o meio da tela, longe
+            do título a que ele pertence. */}
+        <div className="text-left sm:text-right">
           <div className="text-3xl font-semibold leading-none">
             {latest.value >= 1000 ? latest.value.toLocaleString("pt-BR") : latest.value}
             <span className="ml-1 text-base font-normal text-muted">{series.unit}</span>

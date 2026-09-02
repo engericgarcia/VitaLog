@@ -15,7 +15,8 @@
     "db:seed": "tsx scripts/seed.ts",
     "db:studio": "drizzle-kit studio",
     "db:verify": "tsx scripts/verify-db.ts",
-    "db:review-case": "tsx scripts/seed-review-case.ts"
+    "db:review-case": "tsx scripts/seed-review-case.ts",
+    "api:check": "tsx scripts/check-api-key.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.123.0",
