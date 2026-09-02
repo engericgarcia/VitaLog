@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import Link from "next/link";
 import { Geist, Geist_Mono } from "next/font/google";
+import { Logo } from "@/components/Logo";
 import "./globals.css";
 
 const geistSans = Geist({ variable: "--font-geist-sans", subsets: ["latin"] });
@@ -73,14 +74,8 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
             inacessível — e "Enviar laudo" quebrava no meio. */}
         <header className="border-b border-border bg-surface">
           <div className="mx-auto flex max-w-6xl flex-wrap items-center gap-x-6 gap-y-1 px-5 py-3">
-            <Link href="/" className="flex items-center gap-2 font-semibold tracking-tight">
-              <span
-                aria-hidden
-                className="grid h-7 w-7 place-items-center rounded-md bg-accent text-sm text-white"
-              >
-                V
-              </span>
-              Vitalog
+            <Link href="/" className="transition-opacity hover:opacity-80">
+              <Logo />
             </Link>
             <nav className="-mx-1 flex w-full items-center gap-0.5 overflow-x-auto text-sm sm:w-auto sm:gap-1 sm:overflow-visible">
               {NAV.map((item) => (
