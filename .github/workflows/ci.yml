@@ -20,8 +20,12 @@ jobs:
       - name: Lint
         run: npm run lint
 
+      # `next typegen` primeiro: LayoutProps e PageProps sao tipos gerados pelo
+      # Next em .next/types. Na maquina de quem ja rodou o build eles existem;
+      # num clone limpo, nao — foi exatamente assim que este CI quebrou na
+      # primeira execucao, passando local e falhando aqui.
       - name: Typecheck
-        run: npx tsc --noEmit
+        run: npm run typecheck
 
       - name: Testes
         run: npm test

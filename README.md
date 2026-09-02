@@ -110,7 +110,7 @@ enviar um laudo de verdade em `/enviar`.
 ```bash
 npm test               # 33 testes: catálogo, unidades, normalização — sem rede e sem banco
 npm run lint
-npx tsc --noEmit
+npm run typecheck    # next typegen + tsc
 
 npm run db:verify      # inspeciona o banco real: tabelas, colunas, índices, contagens
 npm run db:review-case  # insere um pendente para exercitar /revisar sem chave de API
