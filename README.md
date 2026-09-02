@@ -112,12 +112,30 @@ npm test               # 33 testes: catálogo, unidades, normalização — sem 
 npm run lint
 npm run typecheck    # next typegen + tsc
 
-npm run db:verify      # inspeciona o banco real: tabelas, colunas, índices, contagens
+npm run db:verify       # inspeciona o banco real: tabelas, colunas, índices, contagens
 npm run db:review-case  # insere um pendente para exercitar /revisar sem chave de API
+npm run api:check       # verifica se a ANTHROPIC_API_KEY autentica e tem crédito
 ```
 
 Se o banco não estiver configurado, o app não quebra: mostra uma tela com os
 passos que faltam.
+
+## Instalável no celular
+
+O app é um PWA: no iPhone, **Compartilhar → Adicionar à Tela de Início**; no
+Android, o Chrome oferece **Instalar app**. Abre em tela cheia, sem barra do
+navegador, e o `start_url` aponta para `/painel` — app instalado abre onde se
+trabalha, não na página que explica o projeto.
+
+Os ícones são gerados por `scripts/generate-icons.py`, sem dependência de
+biblioteca de imagem. São três variantes porque cada plataforma recorta de um
+jeito: a `maskable` tem margem extra (o Android recorta em círculo ou squircle)
+e a da Apple é quadrada e opaca (o iOS arredonda sozinho, e cantos
+transparentes virariam bordas pretas na tela de início).
+
+Não há service worker: o app é inteiramente movido a dados do banco, então um
+cache offline mostraria números desatualizados — o que num histórico de saúde é
+pior do que uma tela de erro honesta.
 
 ## Estrutura
 
@@ -134,6 +152,8 @@ passos que faltam.
 | `src/lib/env.ts` | Validação de ambiente com falha imediata e legível |
 | `scripts/seed.ts` | Catálogos + conta de demonstração |
 | `scripts/verify-db.ts` | Inspeção do schema aplicado no Postgres |
+| `src/app/manifest.ts` | Manifest do PWA |
+| `scripts/generate-icons.py` | Gera os ícones do app a partir da marca |
 
 ## Estado atual
 
