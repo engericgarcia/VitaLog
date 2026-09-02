@@ -57,16 +57,22 @@ export default function Enviar() {
   const isProd = process.env.NODE_ENV === "production";
 
   return (
-    <div className="mx-auto max-w-3xl px-5 py-10">
-      <h1 className="text-2xl font-semibold tracking-tight">Enviar laudo</h1>
-      <p className="mt-2 text-muted">
-        PDF do laboratório ou foto do laudo de papel. O extrator lê, estrutura e
-        devolve para você conferir — nada entra no histórico sem revisão.
-      </p>
+    <div>
+      <div className="hero-glow border-b border-border">
+        <div className="mx-auto max-w-3xl px-5 py-8">
+          <h1 className="text-3xl font-semibold tracking-tight">Enviar laudo</h1>
+          <p className="mt-2 leading-relaxed text-muted">
+            PDF do laboratório ou foto do laudo de papel. O extrator lê, estrutura e
+            devolve para você conferir — nada entra no histórico sem revisão.
+          </p>
+        </div>
+      </div>
 
-      {/* Melhor dizer antes que a extração está desligada do que deixar a pessoa
-          escolher um arquivo, esperar e só então receber um erro. */}
-      {enabled ? <UploadForm /> : <ExtractionDisabled isProd={isProd} />}
+      <div className="mx-auto max-w-3xl px-5 pb-14">
+        {/* Melhor dizer antes que a extração está desligada do que deixar a pessoa
+            escolher um arquivo, esperar e só então receber um erro. */}
+        {enabled ? <UploadForm /> : <ExtractionDisabled isProd={isProd} />}
+      </div>
     </div>
   );
 }

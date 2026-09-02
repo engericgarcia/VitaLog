@@ -17,15 +17,21 @@ export default async function Revisar() {
   }
 
   return (
-    <div className="mx-auto max-w-4xl px-5 py-10">
-      <h1 className="text-2xl font-semibold tracking-tight">Conferência</h1>
-      <p className="mt-2 max-w-2xl text-muted">
-        Resultados que o extrator não reconheceu com segurança. Nenhum entra na
-        série antes de você confirmar — e o que você confirmar aqui ensina o
-        catálogo a reconhecer aquela grafia sozinho da próxima vez.
-      </p>
+    <div>
+      <div className="hero-glow border-b border-border">
+        <div className="mx-auto max-w-4xl px-5 py-8">
+          <h1 className="text-3xl font-semibold tracking-tight">Conferência</h1>
+          <p className="mt-2 max-w-2xl leading-relaxed text-muted">
+            Resultados que o extrator não reconheceu com segurança. Nenhum entra na
+            série antes de você confirmar — e o que você confirmar aqui ensina o
+            catálogo a reconhecer aquela grafia sozinho da próxima vez.
+          </p>
+        </div>
+      </div>
 
-      {queue.length === 0 ? (
+      <div className="mx-auto max-w-4xl px-5 pb-14">
+
+        {queue.length === 0 ? (
         <div className="mt-8 rounded-xl border border-border bg-surface p-8 text-center">
           <p className="font-medium">Nada para conferir</p>
           <p className="mt-1 text-sm text-muted">
@@ -49,7 +55,8 @@ export default async function Revisar() {
             ))}
           </ul>
         </>
-      )}
+        )}
+      </div>
     </div>
   );
 }
