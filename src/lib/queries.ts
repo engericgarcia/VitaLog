@@ -1,6 +1,9 @@
 import { and, asc, desc, eq, isNotNull } from "drizzle-orm";
 import { db } from "@/db";
-import { analyteAliases, analytes, labReports, labResults, users, vaccinations, vaccines } from "@/db/schema";
+import {
+  allergies, analyteAliases, analytes, conditions, devices, encounters,
+  labReports, labResults, procedures, users, vaccinations, vaccines,
+} from "@/db/schema";
 import { BY_ID, type AnalyteCategory } from "@/lib/clinical/catalog";
 
 export const DEMO_USER_ID = "demo-user";
@@ -180,4 +183,72 @@ export async function getLearnedAliases(): Promise<Map<string, string>> {
 
 export async function getAnalyteCatalog() {
   return db.select().from(analytes).orderBy(asc(analytes.namePt));
+}
+
+
+/* ─── Prontuário ─────────────────────────────────────────────────────────── */
+
+/** Anafilaxia primeiro. Numa emergência a ordem da lista é a informação. */
+const SEVERITY_RANK = { anafilaxia: 0, grave: 1, moderada: 2, leve: 3 } as const;
+
+export async function getAllergies(userId: string) {
+  const rows = await db
+    .select()
+    .from(allergies)
+    .where(eq(allergies.userId, userId));
+  return rows.sort(
+    (a, b) => SEVERITY_RANK[a.severity] - SEVERITY_RANK[b.severity],
+  );
+}
+
+export async function getConditions(userId: string) {
+  return db
+    .select()
+    .from(conditions)
+    .where(eq(conditions.userId, userId))
+    .orderBy(desc(conditions.criticalForTriage), asc(conditions.name));
+}
+
+export async function getProcedures(userId: string) {
+  return db
+    .select()
+    .from(procedures)
+    .where(eq(procedures.userId, userId))
+    .orderBy(desc(procedures.performedAt));
+}
+
+export async function getDevices(userId: string) {
+  return db
+    .select()
+    .from(devices)
+    .where(eq(devices.userId, userId))
+    .orderBy(desc(devices.active), desc(devices.implantedAt));
+}
+
+export async function getEncounters(userId: string, limit = 50) {
+  return db
+    .select()
+    .from(encounters)
+    .where(eq(encounters.userId, userId))
+    .orderBy(desc(encounters.occurredAt))
+    .limit(limit);
+}
+
+/** Tudo que a triagem precisa, numa ida só ao banco. */
+export async function getEmergencyRecord(userId: string) {
+  const [user, allergyRows, conditionRows, procedureRows, deviceRows] =
+    await Promise.all([
+      getUser(userId),
+      getAllergies(userId),
+      getConditions(userId),
+      getProcedures(userId),
+      getDevices(userId),
+    ]);
+  return {
+    user,
+    allergies: allergyRows,
+    conditions: conditionRows,
+    procedures: procedureRows,
+    devices: deviceRows.filter((d) => d.active),
+  };
 }

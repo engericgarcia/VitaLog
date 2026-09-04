@@ -1,15 +1,43 @@
 # Vitalog
 
-Histórico vitalício de exames laboratoriais e vacinas. Você envia o PDF que o
-laboratório já te mandou por e-mail; o sistema extrai os resultados, normaliza
-contra um catálogo ancorado em LOINC e monta a série temporal.
+Prontuário pessoal: o histórico de saúde de uma vida num lugar só — exames,
+vacinas, alergias, condições, cirurgias e dispositivos implantados —
+independente de o atendimento ter sido na rede pública ou privada.
+
+Duas metades com propósitos diferentes:
+
+- **Séries de exame.** Você envia o PDF que o laboratório já te mandou; o
+  sistema extrai os resultados, normaliza contra um catálogo ancorado em LOINC
+  e monta a linha do tempo. Aqui o valor está na tendência.
+- **Triagem.** Tipo sanguíneo, alergias, comorbidades, cirurgias prévias e
+  implantes, numa tela feita para ser lida em trinta segundos por alguém que
+  não é você. Aqui o valor está em não faltar.
 
 > **Projeto de portfólio.** Todos os dados de demonstração são sintéticos e os
 > nomes de laboratório são fictícios. Não coloque dado real de saúde aqui.
 
 ---
 
-## O problema
+## O painel de triagem
+
+O que alguém precisa saber sobre você quando você talvez não esteja consciente
+para contar. Três decisões de segurança valem destaque:
+
+**Ausência de registro nunca é apresentada como ausência do fato.** Um campo
+vazio, em triagem, é lido como "esta pessoa não tem alergia" — e o que ele
+realmente diz é "ninguém registrou alergia nenhuma". A tela nunca fica vazia:
+ela diz explicitamente que não sabe, e manda confirmar com o paciente.
+
+**Tipo sanguíneo carrega a procedência.** Tipo informado pelo próprio paciente
+não serve para transfundir, e a tela avisa isso em vez de exibir a letra como
+se fosse fato. São três estados distintos — confirmado em laboratório, origem
+duvidosa e sem registro — e achatá-los seria perigoso.
+
+**Compatibilidade com ressonância distingue "não pode" de "não se sabe".** Um
+marca-passo antigo numa ressonância pode matar, e "desconhecido" precisa gritar
+tanto quanto "proibido".
+
+## O problema dos exames
 
 Guardar exame é fácil — o Google Drive resolve. O que ninguém consegue é
 **comparar**: seus últimos 10 anos de colesterol estão espalhados por seis
@@ -152,6 +180,7 @@ pior do que uma tela de erro honesta.
 | `src/lib/env.ts` | Validação de ambiente com falha imediata e legível |
 | `scripts/seed.ts` | Catálogos + conta de demonstração |
 | `scripts/verify-db.ts` | Inspeção do schema aplicado no Postgres |
+| `src/app/emergencia/page.tsx` | Painel de triagem |
 | `src/app/manifest.ts` | Manifest do PWA |
 | `scripts/generate-icons.py` | Gera os ícones do app a partir da marca |
 
@@ -172,8 +201,13 @@ Pendente e conhecido:
 - **Os códigos LOINC não foram conferidos um a um** contra a base oficial. Estão
   marcados como tal no catálogo. O agrupamento das séries não depende deles (usa
   o `id` canônico); eles servem para interoperar com outros sistemas.
-- Sem autenticação — tudo opera sobre um usuário fixo (`demo-user`). É a próxima
-  peça: sem ela não há multiusuário nem RLS no Supabase.
+- **Sem autenticação nem controle de permissão.** É a lacuna mais importante:
+  um prontuário precisa que o paciente decida quem vê o quê, e que a triagem
+  continue acessível numa emergência mesmo assim. Hoje tudo opera sobre um
+  usuário fixo (`demo-user`).
+- Alergias, condições, cirurgias e dispositivos só entram pelo seed — falta a
+  interface de cadastro e edição.
+- Atendimentos estão no modelo de dados mas ainda não têm tela.
 - Arquivo enviado não é persistido em storage (só o JSON extraído).
 - Sem limite de taxa no endpoint de upload — cada extração custa dinheiro.
 - Faixas de referência ainda não variam por sexo e idade, embora o schema já

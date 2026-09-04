@@ -10,7 +10,13 @@ import postgres from "postgres";
 
 const url = process.env.DIRECT_URL ?? process.env.DATABASE_URL;
 if (!url) { console.error("DIRECT_URL não definida"); process.exit(1); }
-const sql = postgres(url, { max: 1, prepare: false });
+const sql = postgres(url, {
+  max: 1,
+  prepare: false,
+  // O migrator é idempotente e o Postgres avisa "já existe, pulando" em NOTICE.
+  // Sem isto o seed cospe blocos que parecem erro e não são.
+  onnotice: () => {},
+});
 
 async function main() {
   const [{ version }] = await sql`select version()`;

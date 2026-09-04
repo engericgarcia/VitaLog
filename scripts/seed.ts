@@ -30,7 +30,13 @@ if (!url) {
   process.exit(1);
 }
 
-const client = postgres(url, { max: 1, prepare: false });
+const client = postgres(url, {
+  max: 1,
+  prepare: false,
+  // O migrator é idempotente e o Postgres avisa "já existe, pulando" em NOTICE.
+  // Sem isto o seed cospe blocos que parecem erro e não são.
+  onnotice: () => {},
+});
 const db = drizzle(client, { schema });
 
 const DEMO_USER_ID = "demo-user";
@@ -145,9 +151,23 @@ async function main() {
       name: "Ana Beatriz Moreira",
       birthDate: "1988-03-14",
       sex: "female",
+      bloodType: "O+",
+      bloodTypeSource: "laboratorio",
       isDemo: true,
     })
-    .onConflictDoNothing();
+    // Atualiza em vez de ignorar: com onConflictDoNothing, campos novos
+    // (tipo sanguíneo, por exemplo) nunca chegavam à linha já existente.
+    .onConflictDoUpdate({
+      target: schema.users.id,
+      set: {
+        name: "Ana Beatriz Moreira",
+        birthDate: "1988-03-14",
+        sex: "female",
+        bloodType: "O+",
+        bloodTypeSource: "laboratorio",
+        isDemo: true,
+      },
+    });
 
   // Idempotência: limpa o histórico da demo antes de repopular.
   await db.delete(schema.labReports).where(eq(schema.labReports.userId, DEMO_USER_ID));
@@ -189,6 +209,79 @@ async function main() {
     }
   }
 
+
+  console.log("→ prontuário da conta demo");
+  // Idempotência: o prontuário é reescrito inteiro a cada seed.
+  for (const t of [schema.allergies, schema.conditions, schema.procedures, schema.devices, schema.encounters]) {
+    await db.delete(t).where(eq(t.userId, DEMO_USER_ID));
+  }
+
+  /**
+   * O prontuário conversa com os exames de propósito: dislipidemia combina com
+   * o LDL subindo, pré-diabetes com a HbA1c em 5,9. Demo que se contradiz não
+   * demonstra nada.
+   */
+  const allergies: Array<[string, "medicamento" | "alimento" | "ambiental" | "material" | "outro", "leve" | "moderada" | "grave" | "anafilaxia", string, string]> = [
+    ["Dipirona", "medicamento", "anafilaxia", "Edema de glote e hipotensão", "2012-08-03"],
+    ["Frutos do mar", "alimento", "grave", "Urticária generalizada e broncoespasmo", "2007-01-20"],
+    ["Látex", "material", "moderada", "Dermatite de contato", "2011-11-05"],
+    ["Ácaro", "ambiental", "leve", "Rinite sazonal", "2015-04-10"],
+  ];
+  for (const [substance, category, severity, reaction, notedAt] of allergies) {
+    await db.insert(schema.allergies).values({
+      id: randomUUID(), userId: DEMO_USER_ID, substance, category, severity,
+      reaction, notedAt, source: "profissional",
+    });
+  }
+
+  const conditions: Array<[string, string | null, "ativa" | "controlada" | "resolvida", boolean, string]> = [
+    ["Dislipidemia", "E78.5", "ativa", false, "2023-06-21"],
+    ["Pré-diabetes", "R73.0", "ativa", false, "2024-05-15"],
+    ["Enxaqueca com aura", "G43.1", "controlada", true, "2010-02-18"],
+    ["Rinite alérgica", "J30.4", "controlada", false, "2015-04-10"],
+  ];
+  for (const [name, icd10, status, criticalForTriage, diagnosedAt] of conditions) {
+    await db.insert(schema.conditions).values({
+      id: randomUUID(), userId: DEMO_USER_ID, name, icd10, status,
+      criticalForTriage, diagnosedAt,
+    });
+  }
+
+  const procedures: Array<[string, "cirurgia" | "procedimento" | "internacao", string, string]> = [
+    ["Apendicectomia por videolaparoscopia", "cirurgia", "2011-11-05", "Hospital São Camilo"],
+    ["Parto cesáreo", "cirurgia", "2019-09-27", "Maternidade Santa Clara"],
+    ["Endoscopia digestiva alta", "procedimento", "2023-03-14", "Centro de Endoscopia Aurora"],
+  ];
+  for (const [name, kind, performedAt, facility] of procedures) {
+    await db.insert(schema.procedures).values({
+      id: randomUUID(), userId: DEMO_USER_ID, name, kind, performedAt, facility,
+    });
+  }
+
+  await db.insert(schema.devices).values({
+    id: randomUUID(), userId: DEMO_USER_ID,
+    name: "DIU hormonal (levonorgestrel)",
+    manufacturer: "Bayer", model: "Mirena",
+    implantedAt: "2020-06-11", facility: "Clínica Vida Mulher",
+    mriSafe: true, active: true,
+    notes: "Compatível com ressonância até 3 T.",
+  });
+
+  const encounters: Array<["consulta" | "emergencia" | "internacao" | "exame" | "vacinacao", string, string, string, "sus" | "convenio" | "particular", string]> = [
+    ["emergencia", "2012-08-03", "Pronto-socorro Municipal", "Emergência", "sus", "Reação anafilática a dipirona. Adrenalina IM, observação 12 h."],
+    ["cirurgia" as never, "2011-11-05", "Hospital São Camilo", "Cirurgia geral", "convenio", "Apendicite aguda."],
+    ["consulta", "2023-06-21", "Clínica Integrada Aurora", "Clínica médica", "convenio", "Check-up anual. Iniciado acompanhamento de perfil lipídico."],
+    ["consulta", "2024-05-15", "Clínica Integrada Aurora", "Endocrinologia", "convenio", "HbA1c em elevação. Orientação nutricional."],
+    ["consulta", "2025-06-10", "Clínica Integrada Aurora", "Clínica médica", "convenio", "Reforço de orientação; manter acompanhamento semestral."],
+  ];
+  for (const [kind, occurredAt, facility, specialty, network, summary] of encounters) {
+    await db.insert(schema.encounters).values({
+      id: randomUUID(), userId: DEMO_USER_ID,
+      kind: kind === ("cirurgia" as never) ? "internacao" : kind,
+      occurredAt, facility, specialty, network, summary,
+    });
+  }
+
   const shots: Array<[string, string, string]> = [
     ["hepatite-b", "1ª dose", "2005-03-10"],
     ["hepatite-b", "2ª dose", "2005-04-14"],
@@ -220,7 +313,9 @@ async function main() {
 
   console.log(
     `✓ pronto — ${CATALOG.length} analitos, ${VACCINE_CATALOG.length} vacinas, ` +
-      `${VISITS.length} coletas x ${SERIES.length} análises, ${shots.length} doses`,
+      `${VISITS.length} coletas x ${SERIES.length} análises, ${shots.length} doses,\n` +
+      `  ${allergies.length} alergias, ${conditions.length} condições, ` +
+      `${procedures.length} procedimentos, 1 dispositivo, ${encounters.length} atendimentos`,
   );
   await client.end();
 }

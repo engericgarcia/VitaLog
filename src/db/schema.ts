@@ -30,6 +30,17 @@ export const users = pgTable("users", {
   name: text("name").notNull(),
   birthDate: text("birth_date"), // ISO YYYY-MM-DD
   sex: text("sex", { enum: ["female", "male", "other"] }),
+  bloodType: text("blood_type", {
+    enum: ["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"],
+  }),
+  /**
+   * De onde veio o tipo sanguíneo. É um campo de segurança, não de metadado:
+   * tipo informado pelo próprio paciente NUNCA pode ser usado para transfundir
+   * — a tipagem tem que ser refeita. A tela de emergência precisa dizer isso.
+   */
+  bloodTypeSource: text("blood_type_source", {
+    enum: ["laboratorio", "informado", "carteira"],
+  }),
   isDemo: boolean("is_demo").notNull().default(false),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });
@@ -196,6 +207,148 @@ export const vaccinations = pgTable(
   },
   (t) => [index("vaccinations_user_idx").on(t.userId, t.appliedAt)],
 );
+
+
+/**
+ * ─── Prontuário ────────────────────────────────────────────────────────────
+ * As tabelas abaixo existem para a triagem: são o que alguém precisa saber
+ * sobre você em trinta segundos, quando você talvez não esteja consciente para
+ * contar. Diferente das séries de exame, aqui o valor não está na tendência ao
+ * longo do tempo — está em não faltar.
+ */
+
+/**
+ * Alergias e reações adversas.
+ *
+ * `severity` não é enfeite: é o que ordena a lista na tela de emergência.
+ * Anafilaxia a um antibiótico precisa saltar aos olhos antes de uma
+ * intolerância leve.
+ */
+export const allergies = pgTable(
+  "allergies",
+  {
+    id: text("id").primaryKey(),
+    userId: text("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    substance: text("substance").notNull(),
+    category: text("category", {
+      enum: ["medicamento", "alimento", "ambiental", "material", "outro"],
+    }).notNull(),
+    severity: text("severity", {
+      enum: ["leve", "moderada", "grave", "anafilaxia"],
+    }).notNull(),
+    reaction: text("reaction"),
+    notedAt: text("noted_at"), // ISO YYYY-MM-DD
+    source: text("source", { enum: ["profissional", "informado", "extraido"] })
+      .notNull()
+      .default("informado"),
+    notes: text("notes"),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [index("allergies_user_idx").on(t.userId, t.severity)],
+);
+
+/** Comorbidades e condições crônicas. */
+export const conditions = pgTable(
+  "conditions",
+  {
+    id: text("id").primaryKey(),
+    userId: text("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    name: text("name").notNull(),
+    icd10: text("icd10"),
+    status: text("status", { enum: ["ativa", "controlada", "resolvida"] })
+      .notNull()
+      .default("ativa"),
+    /** Marca o que a triagem precisa ver mesmo estando controlada (ex.: epilepsia). */
+    criticalForTriage: boolean("critical_for_triage").notNull().default(false),
+    diagnosedAt: text("diagnosed_at"),
+    notes: text("notes"),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [index("conditions_user_idx").on(t.userId, t.status)],
+);
+
+/** Cirurgias, procedimentos e internações. */
+export const procedures = pgTable(
+  "procedures",
+  {
+    id: text("id").primaryKey(),
+    userId: text("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    name: text("name").notNull(),
+    kind: text("kind", { enum: ["cirurgia", "procedimento", "internacao"] })
+      .notNull()
+      .default("procedimento"),
+    performedAt: text("performed_at"), // ISO YYYY-MM-DD
+    facility: text("facility"),
+    professional: text("professional"),
+    notes: text("notes"),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [index("procedures_user_idx").on(t.userId, t.performedAt)],
+);
+
+/**
+ * Dispositivos implantados: marca-passo, stent, prótese, DIU.
+ *
+ * `mriSafe` é o campo que justifica a tabela existir. Levar alguém com
+ * marca-passo antigo para uma ressonância pode matar — e é exatamente o tipo
+ * de informação que ninguém lembra de perguntar com o paciente inconsciente.
+ */
+export const devices = pgTable(
+  "devices",
+  {
+    id: text("id").primaryKey(),
+    userId: text("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    name: text("name").notNull(),
+    manufacturer: text("manufacturer"),
+    model: text("model"),
+    serial: text("serial"),
+    implantedAt: text("implanted_at"),
+    facility: text("facility"),
+    /** null = não se sabe, que é diferente de "não pode". A tela distingue. */
+    mriSafe: boolean("mri_safe"),
+    active: boolean("active").notNull().default(true),
+    notes: text("notes"),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [index("devices_user_idx").on(t.userId, t.active)],
+);
+
+/** Atendimentos: consulta, emergência, internação. Público ou privado. */
+export const encounters = pgTable(
+  "encounters",
+  {
+    id: text("id").primaryKey(),
+    userId: text("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    kind: text("kind", {
+      enum: ["consulta", "emergencia", "internacao", "exame", "vacinacao"],
+    }).notNull(),
+    occurredAt: text("occurred_at").notNull(), // ISO YYYY-MM-DD
+    facility: text("facility"),
+    specialty: text("specialty"),
+    professional: text("professional"),
+    /** Rede de origem — o ponto do projeto é justamente que as duas convivam. */
+    network: text("network", { enum: ["sus", "convenio", "particular"] }),
+    summary: text("summary"),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [index("encounters_user_idx").on(t.userId, t.occurredAt)],
+);
+
+export type Allergy = typeof allergies.$inferSelect;
+export type Condition = typeof conditions.$inferSelect;
+export type Procedure = typeof procedures.$inferSelect;
+export type Device = typeof devices.$inferSelect;
+export type Encounter = typeof encounters.$inferSelect;
 
 export type User = typeof users.$inferSelect;
 export type Analyte = typeof analytes.$inferSelect;

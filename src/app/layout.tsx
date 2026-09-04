@@ -57,8 +57,9 @@ export const viewport: Viewport = {
 
 const NAV = [
   { href: "/painel", label: "Painel" },
+  { href: "/emergencia", label: "Triagem" },
   { href: "/vacinas", label: "Vacinas" },
-  { href: "/enviar", label: "Enviar laudo" },
+  { href: "/enviar", label: "Enviar" },
   { href: "/revisar", label: "Conferência" },
 ];
 
