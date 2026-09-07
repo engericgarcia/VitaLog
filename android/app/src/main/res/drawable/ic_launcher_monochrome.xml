@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Versão monocromática para os ícones temáticos do Android 13+. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp" android:height="108dp"
+    android:viewportWidth="108" android:viewportHeight="108">
+  <path android:fillColor="#FFFFFFFF" android:pathData="M51.5,24 H56.5 A6,6 0 0 1 62.5,30 V78 A6,6 0 0 1 56.5,84 H51.5 A6,6 0 0 1 45.5,78 V30 A6,6 0 0 1 51.5,24 Z" />
+  <path android:fillColor="#FFFFFFFF" android:pathData="M30,45.5 H78 A6,6 0 0 1 84,51.5 V56.5 A6,6 0 0 1 78,62.5 H30 A6,6 0 0 1 24,56.5 V51.5 A6,6 0 0 1 30,45.5 Z" />
+</vector>

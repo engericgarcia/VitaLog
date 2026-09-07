@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Cruz do Vitalog, mesma geometria e mesmo degradê da versão web.
+  O gradiente usa coordenadas do viewport (não da caixa de cada forma), então
+  os dois retângulos recebem uma rampa contínua em vez de uma cada.
+-->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:aapt="http://schemas.android.com/aapt"
+    android:width="108dp" android:height="108dp"
+    android:viewportWidth="108" android:viewportHeight="108">
+  <path android:pathData="M51.5,24 H56.5 A6,6 0 0 1 62.5,30 V78 A6,6 0 0 1 56.5,84 H51.5 A6,6 0 0 1 45.5,78 V30 A6,6 0 0 1 51.5,24 Z">
+      <aapt:attr name="android:fillColor">
+        <gradient
+            android:type="linear"
+            android:startX="30" android:startY="78"
+            android:endX="78" android:endY="30">
+          <item android:offset="0" android:color="#FF22B8A4" />
+          <item android:offset="0.55" android:color="#FF9EECDD" />
+          <item android:offset="1" android:color="#FFFFFFFF" />
+        </gradient>
+      </aapt:attr>
+  </path>
+  <path android:pathData="M30,45.5 H78 A6,6 0 0 1 84,51.5 V56.5 A6,6 0 0 1 78,62.5 H30 A6,6 0 0 1 24,56.5 V51.5 A6,6 0 0 1 30,45.5 Z">
+      <aapt:attr name="android:fillColor">
+        <gradient
+            android:type="linear"
+            android:startX="30" android:startY="78"
+            android:endX="78" android:endY="30">
+          <item android:offset="0" android:color="#FF22B8A4" />
+          <item android:offset="0.55" android:color="#FF9EECDD" />
+          <item android:offset="1" android:color="#FFFFFFFF" />
+        </gradient>
+      </aapt:attr>
+  </path>
+</vector>
