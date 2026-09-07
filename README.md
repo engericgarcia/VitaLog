@@ -148,6 +148,23 @@ npm run api:check       # verifica se a ANTHROPIC_API_KEY autentica e tem crédi
 Se o banco não estiver configurado, o app não quebra: mostra uma tela com os
 passos que faltam.
 
+## App Android
+
+Há um app nativo em `android/` (Kotlin + Compose) só para a tela de triagem.
+Ele não é um invólucro do site: existe por uma capacidade que a web não tem —
+**funcionar sem sinal**.
+
+A triagem é lida exatamente quando as coisas deram errado, que é o pior momento
+para depender de rede. O app guarda o prontuário no aparelho e o mostra em modo
+avião; a rede só atualiza. Falha de rede nunca apaga o que está guardado — a
+tela declara a idade da cópia e marca "offline".
+
+```bash
+cd android && ./gradlew assembleDebug
+```
+
+Detalhes e decisões em [`android/README.md`](android/README.md).
+
 ## Instalável no celular
 
 O app é um PWA: no iPhone, **Compartilhar → Adicionar à Tela de Início**; no
